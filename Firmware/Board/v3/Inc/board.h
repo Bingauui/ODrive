@@ -28,7 +28,7 @@
 #define SHUNT_RESISTANCE (500e-6f)
 #endif
 
-#define AXIS_COUNT (2)
+#define AXIS_COUNT (1)
 
 // Total count of GPIOs, including encoder pins, CAN pins and a dummy GPIO0.
 // ODrive v3.4 and earlier don't have GPIOs 6, 7 and 8 but to keep the numbering
@@ -89,10 +89,10 @@ using TOpAmp = Drv8301;
 #include <MotorControl/motor.hpp>
 #include <MotorControl/encoder.hpp>
 
-extern std::array<Axis, AXIS_COUNT> axes;
-extern Motor motors[AXIS_COUNT];
-extern OnboardThermistorCurrentLimiter fet_thermistors[AXIS_COUNT];
-extern Encoder encoders[AXIS_COUNT];
+extern Axis axis;
+extern Motor motor;
+extern OnboardThermistorCurrentLimiter fet_thermistor;
+extern Encoder encoder;
 extern Stm32Gpio gpios[GPIO_COUNT];
 
 struct GpioFunction { int mode = 0; uint8_t alternate_function = 0xff; };

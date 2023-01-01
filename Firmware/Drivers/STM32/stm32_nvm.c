@@ -81,21 +81,14 @@ typedef struct {
     const volatile uint64_t* const data;
 } sector_t;
 
-sector_t sectors[] = { {
+sector_t sectors = {
     .sector_id = FLASH_SECTOR_A,
     .n_data = FLASH_SECTOR_A_SIZE >> 3,
     .n_reserved = (FLASH_SECTOR_A_SIZE >> 3) >> 5,
     .alloc_table = FLASH_SECTOR_A_BASE,
     .data = (uint64_t *)FLASH_SECTOR_A_BASE
-}, {
-    .sector_id = FLASH_SECTOR_B,
-    .n_data = FLASH_SECTOR_B_SIZE >> 3,
-    .n_reserved = (FLASH_SECTOR_B_SIZE >> 3) >> 5,
-    .alloc_table = FLASH_SECTOR_B_BASE,
-    .data = (uint64_t *)FLASH_SECTOR_B_BASE
-}};
+};
 
-uint8_t read_sector_; // 0 or 1 to indicate which sector to read from and which to write to
 size_t n_staging_area_; // number of 64-bit values that were reserved using NVM_start_write
 size_t n_valid_; // number of 64-bit fields that can be read
 
@@ -196,18 +189,17 @@ fail:
     return HAL_FLASH_GetError(); // non-zero
 }
 
-// @brief Reads the allocation table from behind to determine how many fields match the
-// reference state.
-// @param sector: The sector on which to perform the search
-// @param max_index: The maximum index that should be considered
-// @param ref_state: The reference state
-// @param state: Set to the first encountered state that is unequal to ref_state.
-//               Set to ref_state if all encountered states are equal to ref_state.
-// @returns The smallest index that points to a field with ref_state.
+// @brief 从后面读取分配表，以确定有多少字段与参考状态
+// @param sector: 要执行搜索的扇区
+// @param max_index: 应考虑的最大索引
+// @param ref_state: 参考状态
+// @param state: 设置为第一个遇到的不等于ref_state的状态。
+//               如果所有遇到的状态都等于ref_state，则设置为ref_state。
+// @returns 指向ref_state字段的最小索引。
 //          This value is at least sector->n_reserved and at most max_index.
 size_t scan_allocation_table(sector_t *sector, size_t max_index, field_state_t ref_state, field_state_t *state) {
     const uint8_t ref_states = (ref_state << 0) | (ref_state << 2) | (ref_state << 4) | (ref_state << 6);
-    size_t index = (((max_index + 3) >> 2) << 2); // start at the max index but round up to a multiple of 4
+    size_t index = (((max_index + 3) >> 2) << 2); // 从最大索引开始，但四舍五入到4的倍数
     size_t ignore = index - max_index;
     uint8_t states = ref_states;
 
@@ -240,22 +232,17 @@ size_t scan_allocation_table(sector_t *sector, size_t max_index, field_state_t r
 // cause undefined behavior.
 // @returns 0 on success or a non-zero error code otherwise
 int NVM_init(void) {
-    field_state_t sector0_state, sector1_state;
-    sectors[0].index = scan_allocation_table(&sectors[0], sectors[0].n_data,
+    field_state_t sector0_state;
+    sectors.index = scan_allocation_table(&sectors, sectors.n_data,
                 ERASED, &sector0_state);
-    sectors[1].index = scan_allocation_table(&sectors[1], sectors[1].n_data,
-                ERASED, &sector1_state);
     //printf("sector states: %02x, %02x\r\n", sector0_state, sector1_state); osDelay(5);
 
     // Select valid sector on a best effort basis
     // (in unfortunate cases valid_sector might actually point
     // to an invalid or erased sector)
-    read_sector_ = 0;
-    if (sector1_state == VALID)
-        read_sector_ = 1;
-    
+
     // count the number of valid fields
-    sector_t *read_sector = &sectors[read_sector_];
+    sector_t *read_sector = &sectors;
     uint8_t first_nonvalid_state;
     size_t min_valid_index = scan_allocation_table(read_sector, read_sector->index,
         VALID, &first_nonvalid_state);
@@ -282,13 +269,10 @@ int NVM_init(void) {
 //
 // @returns 0 on success or a non-zero error code otherwise
 int NVM_erase(void) {
-    read_sector_ = 0;
-    sectors[0].index = sectors[0].n_reserved;
-    sectors[1].index = sectors[1].n_reserved;
+    sectors.index = sectors.n_reserved;
 
     int state = 0;
-    state |= erase(&sectors[0]);
-    state |= erase(&sectors[1]);
+    state |= erase(&sectors);
     return state;
 }
 
@@ -301,7 +285,7 @@ size_t NVM_get_max_read_length(void) {
 // @brief Returns the maximum length (in bytes) that can passed to NVM_start_write.
 // This holds until NVM_commit is called.
 size_t NVM_get_max_write_length(void) {
-    sector_t *target = &sectors[1 - read_sector_];
+    sector_t *target = &sectors;
     return (target->n_data - target->n_reserved) << 3;
 }
 
@@ -314,7 +298,7 @@ size_t NVM_get_max_write_length(void) {
 int NVM_read(size_t offset, uint8_t *data, size_t length) {
     if (offset + length > (n_valid_ << 3))
         return -1;
-    sector_t *read_sector = &sectors[read_sector_];
+    sector_t *read_sector = &sectors;
     const uint8_t *src_ptr = ((const uint8_t *)&read_sector->data[read_sector->index - n_valid_]) + offset;
     memcpy(data, src_ptr, length);
     return 0;
@@ -328,7 +312,7 @@ int NVM_read(size_t offset, uint8_t *data, size_t length) {
 // @param length: Length of the staging block that should be created
 int NVM_start_write(size_t length) {
     int status = 0;
-    sector_t *target = &sectors[1 - read_sector_];
+    sector_t *target = &sectors;
 
     length = (length + 7) >> 3; // round to multiple of 64 bit
     if (length > target->n_data - target->n_reserved)
@@ -361,7 +345,7 @@ int NVM_start_write(size_t length) {
 int NVM_write(size_t offset, uint8_t *data, size_t length) {
     if (offset + length > (n_staging_area_ << 3))
         return -1;
-    sector_t *target = &sectors[1 - read_sector_];
+    sector_t *target = &sectors;
 
     HAL_FLASH_Unlock();
     HAL_FLASH_ClearError();
@@ -393,8 +377,8 @@ fail:
 
 // @brief Commits the new data to NVM atomically.
 int NVM_commit(void) {
-    sector_t *read_sector = &sectors[read_sector_];
-    sector_t *write_sector = &sectors[1 - read_sector_];
+    sector_t *read_sector = &sectors;
+    sector_t *write_sector = &sectors;
 
     // mark the newly-written fields as valid
     int status = set_allocation_state(write_sector, write_sector->index, n_staging_area_, VALID);
@@ -404,7 +388,6 @@ int NVM_commit(void) {
     write_sector->index += n_staging_area_;
     n_valid_ = n_staging_area_;
     n_staging_area_ = 0;
-    read_sector_ = 1 - read_sector_;
 
     // invalidate the other sector
     if (read_sector->index < read_sector->n_data) {

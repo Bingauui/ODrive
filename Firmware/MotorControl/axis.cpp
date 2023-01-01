@@ -272,7 +272,7 @@ bool Axis::start_closed_loop_control() {
             controller_.pos_wrap_src_.disconnect();
             controller_.vel_estimate_src_.connect_to(&sensorless_estimator_.vel_estimate_);
         } else if (controller_.config_.load_encoder_axis < AXIS_COUNT) {
-            Axis* ax = &axes[controller_.config_.load_encoder_axis];
+            Axis* ax = &axis;
             controller_.pos_estimate_circular_src_.connect_to(&ax->encoder_.pos_circular_);
             controller_.pos_wrap_src_.connect_to(&controller_.config_.circular_setpoint_range);
             controller_.pos_estimate_linear_src_.connect_to(&ax->encoder_.pos_estimate_);

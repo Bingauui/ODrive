@@ -2,7 +2,7 @@
 #include <utils.hpp>
 #include <board.h>
 
-
+#pragma GCC diagnostic ignored "-Wregister"
 // Compute rising edge timings (0.0 - 1.0) as a function of alpha-beta
 // as per the magnitude invariant clarke transform
 // The magnitude of the alpha-beta vector may not be larger than sqrt(3)/2

@@ -84,7 +84,7 @@ public:
 #include <unordered_map>
 #include <stdlib.h>
 //#include <ostream>
-
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 /* Backport features from C++14 and C++17 ------------------------------------*/
 
 #if __cplusplus < 201402L

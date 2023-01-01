@@ -7,7 +7,7 @@
                 "${workspaceFolder}/ThirdParty/FreeRTOS/Source/portable/GCC/ARM_CM4F",
                 "${workspaceFolder}/fibre-cpp/include"
             ],
-            "compilerPath": "${ARM_GCC_ROOT}/bin/arm-none-eabi-g++.exe",
+            "compilerPath": "E:\\MyProject\\tools\\arm-gnu-toolchain-12.2.mpacbti-bet1-mingw-w64-i686-arm-none-eabi\\bin\\arm-none-eabi-g++.exe",
             "intelliSenseMode": "gcc-arm",
             "defines": [
                 "__arm__",
@@ -34,7 +34,8 @@
                 "-u _scanf_float"
             ],
             "cStandard": "c11",
-            "cppStandard": "c++17"
+            "cppStandard": "c++17",
+            "configurationProvider": "ms-vscode.cmake-tools"
         },
         {
             "name": "ODrive 3.6 Linux",

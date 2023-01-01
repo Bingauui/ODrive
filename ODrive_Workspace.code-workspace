@@ -20,7 +20,10 @@
 		}
 	],
 	"settings": {
-		"c-cpp-flylint.cppcheck.standard": ["c99","c++14"],
+		"c-cpp-flylint.cppcheck.standard": [
+			"c99",
+			"c++17"
+		],
 		"files.associations": {
 			"*.config": "yaml",
 			"memory": "cpp",
@@ -107,7 +110,14 @@
 			"readerwriter": "cpp",
 			"charconv": "cpp",
 			"image": "cpp",
-			"imageutils": "cpp"
-		}
+			"imageutils": "cpp",
+			"numbers": "cpp",
+			"semaphore": "cpp",
+			"stm32_system.h": "c",
+			"interface_usb.h": "c",
+			"odrive_main.h": "c",
+			"unistd.h": "c"
+		},
+		"cmake.generator": "Ninja",
 	}
 }

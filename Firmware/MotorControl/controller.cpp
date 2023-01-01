@@ -207,9 +207,9 @@ bool Controller::update() {
         } break;
         case INPUT_MODE_MIRROR: {
             if (config_.axis_to_mirror < AXIS_COUNT) {
-                std::optional<float> other_pos = axes[config_.axis_to_mirror].encoder_.pos_estimate_.present();
-                std::optional<float> other_vel = axes[config_.axis_to_mirror].encoder_.vel_estimate_.present();
-                std::optional<float> other_torque = axes[config_.axis_to_mirror].controller_.torque_output_.present();
+                std::optional<float> other_pos = axis.encoder_.pos_estimate_.present();
+                std::optional<float> other_vel = axis.encoder_.vel_estimate_.present();
+                std::optional<float> other_torque = axis.controller_.torque_output_.present();
 
                 if (!other_pos.has_value() || !other_vel.has_value() || !other_torque.has_value()) {
                     set_error(ERROR_INVALID_ESTIMATE);

@@ -1,17 +1,16 @@
 /* Includes ------------------------------------------------------------------*/
 
-#include <board.h>
-
-#include <cmsis_os.h>
-#include <cmath>
-#include <stdint.h>
-#include <stdlib.h>
-
 #include <adc.h>
+#include <board.h>
+#include <cmsis_os.h>
 #include <gpio.h>
 #include <main.h>
 #include <spi.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <tim.h>
+
+#include <cmath>
 #include <utils.hpp>
 
 #include "odrive_main.h"
@@ -31,7 +30,7 @@ const uint32_t stack_size_analog_thread = 1024;  // Bytes
 // This value is updated by the DC-bus reading ADC.
 // Arbitrary non-zero inital value to avoid division by zero if ADC reading is late
 float vbus_voltage = 12.0f;
-float ibus_ = 0.0f; // exposed for monitoring only
+float ibus_ = 0.0f;  // exposed for monitoring only
 bool brake_resistor_armed = false;
 bool brake_resistor_saturated = false;
 float brake_resistor_current = 0.0f;
@@ -42,46 +41,44 @@ osThreadId analog_thread = 0;
 /* Safety critical functions -------------------------------------------------*/
 
 /*
-* This section contains all accesses to safety critical hardware registers.
-* Specifically, these registers:
-*   Motor0 PWMs:
-*     Timer1.MOE (master output enabled)
-*     Timer1.CCR1 (counter compare register 1)
-*     Timer1.CCR2 (counter compare register 2)
-*     Timer1.CCR3 (counter compare register 3)
-*   Motor1 PWMs:
-*     Timer8.MOE (master output enabled)
-*     Timer8.CCR1 (counter compare register 1)
-*     Timer8.CCR2 (counter compare register 2)
-*     Timer8.CCR3 (counter compare register 3)
-*   Brake resistor PWM:
-*     Timer2.CCR3 (counter compare register 3)
-*     Timer2.CCR4 (counter compare register 4)
-* 
-* The following assumptions are made:
-*   - The hardware operates as described in the datasheet:
-*     http://www.st.com/content/ccc/resource/technical/document/reference_manual/3d/6d/5a/66/b4/99/40/d4/DM00031020.pdf/files/DM00031020.pdf/jcr:content/translations/en.DM00031020.pdf
-*     This assumption also requires for instance that there are no radiation
-*     caused hardware errors.
-*   - After startup, all variables used in this section are exclusively modified
-*     by the code in this section (this excludes function parameters)
-*     This assumption also requires that there is no memory corruption.
-*   - This code is compiled by a C standard compliant compiler.
-*
-* Furthermore:
-*   - Between calls to safety_critical_arm_motor_pwm and
-*     safety_critical_disarm_motor_pwm the motor's Ibus current is
-*     set to the correct value and update_brake_resistor is called
-*     at a high rate.
-*/
-
+ * This section contains all accesses to safety critical hardware registers.
+ * Specifically, these registers:
+ *   Motor0 PWMs:
+ *     Timer1.MOE (master output enabled)
+ *     Timer1.CCR1 (counter compare register 1)
+ *     Timer1.CCR2 (counter compare register 2)
+ *     Timer1.CCR3 (counter compare register 3)
+ *   Motor1 PWMs:
+ *     Timer8.MOE (master output enabled)
+ *     Timer8.CCR1 (counter compare register 1)
+ *     Timer8.CCR2 (counter compare register 2)
+ *     Timer8.CCR3 (counter compare register 3)
+ *   Brake resistor PWM:
+ *     Timer2.CCR3 (counter compare register 3)
+ *     Timer2.CCR4 (counter compare register 4)
+ *
+ * The following assumptions are made:
+ *   - The hardware operates as described in the datasheet:
+ *     http://www.st.com/content/ccc/resource/technical/document/reference_manual/3d/6d/5a/66/b4/99/40/d4/DM00031020.pdf/files/DM00031020.pdf/jcr:content/translations/en.DM00031020.pdf
+ *     This assumption also requires for instance that there are no radiation
+ *     caused hardware errors.
+ *   - After startup, all variables used in this section are exclusively modified
+ *     by the code in this section (this excludes function parameters)
+ *     This assumption also requires that there is no memory corruption.
+ *   - This code is compiled by a C standard compliant compiler.
+ *
+ * Furthermore:
+ *   - Between calls to safety_critical_arm_motor_pwm and
+ *     safety_critical_disarm_motor_pwm the motor's Ibus current is
+ *     set to the correct value and update_brake_resistor is called
+ *     at a high rate.
+ */
 
 // @brief Arms the brake resistor
 void safety_critical_arm_brake_resistor() {
     CRITICAL_SECTION() {
-        for (size_t i = 0; i < AXIS_COUNT; ++i) {
-            axes[i].motor_.I_bus_ = 0.0f;
-        }
+        axis.motor_.I_bus_ = 0.0f;
+
         brake_resistor_armed = true;
 #if HW_VERSION_MAJOR == 3
         htim2.Instance->CCR3 = 0;
@@ -107,9 +104,7 @@ void safety_critical_disarm_brake_resistor() {
 
     // Check necessary to prevent infinite recursion
     if (brake_resistor_was_armed) {
-        for (auto& axis: axes) {
-            axis.motor_.disarm();
-        }
+        axis.motor_.disarm();
     }
 }
 
@@ -139,25 +134,22 @@ void safety_critical_apply_brake_resistor_timings(uint32_t low_off, uint32_t hig
 
 void start_adc_pwm() {
     // Disarm motors
-    for (auto& axis: axes) {
-        axis.motor_.disarm();
-    }
 
-    for (Motor& motor: motors) {
-        // Init PWM
-        int half_load = TIM_1_8_PERIOD_CLOCKS / 2;
-        motor.timer_->Instance->CCR1 = half_load;
-        motor.timer_->Instance->CCR2 = half_load;
-        motor.timer_->Instance->CCR3 = half_load;
+    axis.motor_.disarm();
 
-        // Enable PWM outputs (they are still masked by MOE though)
-        motor.timer_->Instance->CCER |= (TIM_CCx_ENABLE << TIM_CHANNEL_1);
-        motor.timer_->Instance->CCER |= (TIM_CCxN_ENABLE << TIM_CHANNEL_1);
-        motor.timer_->Instance->CCER |= (TIM_CCx_ENABLE << TIM_CHANNEL_2);
-        motor.timer_->Instance->CCER |= (TIM_CCxN_ENABLE << TIM_CHANNEL_2);
-        motor.timer_->Instance->CCER |= (TIM_CCx_ENABLE << TIM_CHANNEL_3);
-        motor.timer_->Instance->CCER |= (TIM_CCxN_ENABLE << TIM_CHANNEL_3);
-    }
+    // Init PWM
+    int half_load = TIM_1_8_PERIOD_CLOCKS / 2;
+    motor.timer_->Instance->CCR1 = half_load;
+    motor.timer_->Instance->CCR2 = half_load;
+    motor.timer_->Instance->CCR3 = half_load;
+
+    // Enable PWM outputs (they are still masked by MOE though)
+    motor.timer_->Instance->CCER |= (TIM_CCx_ENABLE << TIM_CHANNEL_1);
+    motor.timer_->Instance->CCER |= (TIM_CCxN_ENABLE << TIM_CHANNEL_1);
+    motor.timer_->Instance->CCER |= (TIM_CCx_ENABLE << TIM_CHANNEL_2);
+    motor.timer_->Instance->CCER |= (TIM_CCxN_ENABLE << TIM_CHANNEL_2);
+    motor.timer_->Instance->CCER |= (TIM_CCx_ENABLE << TIM_CHANNEL_3);
+    motor.timer_->Instance->CCER |= (TIM_CCxN_ENABLE << TIM_CHANNEL_3);
 
     // Enable ADC and interrupts
     __HAL_ADC_ENABLE(&hadc1);
@@ -166,9 +158,7 @@ void start_adc_pwm() {
     // Warp field stabilize.
     osDelay(2);
 
-
     start_timers();
-
 
     // Start brake resistor PWM in floating output configuration
 #if HW_VERSION_MAJOR == 3
@@ -184,7 +174,7 @@ void start_adc_pwm() {
 }
 
 // @brief ADC1 measurements are written to this buffer by DMA
-uint16_t adc_measurements_[ADC_CHANNEL_COUNT] = { 0 };
+uint16_t adc_measurements_[ADC_CHANNEL_COUNT] = {0};
 
 // @brief Starts the general purpose ADC on the ADC1 peripheral.
 // The measured ADC voltages can be read with get_adc_voltage().
@@ -212,7 +202,7 @@ void start_general_purpose_adc() {
     hadc1.Init.DMAContinuousRequests = ENABLE;
     hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
     if (HAL_ADC_Init(&hadc1) != HAL_OK) {
-        odrv.misconfigured_ = true; // TODO: this is a bit of an abuse of this flag
+        odrv.misconfigured_ = true;  // TODO: this is a bit of an abuse of this flag
         return;
     }
 
@@ -220,9 +210,9 @@ void start_general_purpose_adc() {
     sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
     for (uint32_t channel = 0; channel < ADC_CHANNEL_COUNT; ++channel) {
         sConfig.Channel = channel << ADC_CR1_AWDCH_Pos;
-        sConfig.Rank = channel + 1; // rank numbering starts at 1
+        sConfig.Rank = channel + 1;  // rank numbering starts at 1
         if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
-            odrv.misconfigured_ = true; // TODO: this is a bit of an abuse of this flag
+            odrv.misconfigured_ = true;  // TODO: this is a bit of an abuse of this flag
             return;
         }
     }
@@ -321,10 +311,9 @@ void vbus_sense_adc_cb(uint32_t adc_value) {
 // brake resistor PWM accordingly.
 void update_brake_current() {
     float Ibus_sum = 0.0f;
-    for (size_t i = 0; i < AXIS_COUNT; ++i) {
-        if (axes[i].motor_.is_armed_) {
-            Ibus_sum += axes[i].motor_.I_bus_;
-        }
+
+    if (axis.motor_.is_armed_) {
+        Ibus_sum += axis.motor_.I_bus_;
     }
 
     float brake_duty = 0.0f;
@@ -334,11 +323,11 @@ void update_brake_current() {
             odrv.disarm_with_error(ODrive::ERROR_INVALID_BRAKE_RESISTANCE);
             return;
         }
-    
+
         // Don't start braking until -Ibus > regen_current_allowed
         brake_current = -Ibus_sum - odrv.config_.max_regen_current;
         brake_duty = brake_current * odrv.config_.brake_resistance / vbus_voltage;
-        
+
         if (odrv.config_.enable_dc_bus_overvoltage_ramp && (odrv.config_.brake_resistance > 0.0f) && (odrv.config_.dc_bus_overvoltage_ramp_start < odrv.config_.dc_bus_overvoltage_ramp_end)) {
             brake_duty += std::max((vbus_voltage - odrv.config_.dc_bus_overvoltage_ramp_start) / (odrv.config_.dc_bus_overvoltage_ramp_end - odrv.config_.dc_bus_overvoltage_ramp_start), 0.0f);
         }
@@ -375,28 +364,25 @@ void update_brake_current() {
         odrv.disarm_with_error(ODrive::ERROR_DC_BUS_OVER_REGEN_CURRENT);
         return;
     }
-    
+
     int high_on = (int)(TIM_APB1_PERIOD_CLOCKS * (1.0f - brake_duty));
     int low_off = high_on - TIM_APB1_DEADTIME_CLOCKS;
     if (low_off < 0) low_off = 0;
     safety_critical_apply_brake_resistor_timings(low_off, high_on);
 }
 
-
 /* Analog speed control input */
 
-static void update_analog_endpoint(const struct PWMMapping_t *map, int gpio)
-{
+static void update_analog_endpoint(const struct PWMMapping_t* map, int gpio) {
     float fraction = get_adc_voltage(get_gpio(gpio)) / 3.3f;
     float value = map->min + (fraction * (map->max - map->min));
     fibre::set_endpoint_from_float(map->endpoint, value);
 }
 
-static void analog_polling_thread(void *)
-{
+static void analog_polling_thread(void*) {
     while (true) {
         for (int i = 0; i < GPIO_COUNT; i++) {
-            struct PWMMapping_t *map = &odrv.config_.analog_mappings[i];
+            struct PWMMapping_t* map = &odrv.config_.analog_mappings[i];
 
             if (fibre::is_endpoint_ref_valid(map->endpoint))
                 update_analog_endpoint(map, i);

@@ -4,7 +4,7 @@
 #include "stm32_system.h"
 #include <tim.h>
 #include <array>
-
+#pragma GCC diagnostic ignored "-Wregister"
 class Stm32Timer {
 public:
     /**

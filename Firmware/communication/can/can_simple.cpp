@@ -14,8 +14,6 @@ bool CANSimple::init() {
 }
 
 bool CANSimple::renew_subscription(size_t i) {
-    Axis& axis = axes[i];
-
     // TODO: remove these two lines (see comment in header)
     node_ids_[i] = axis.config_.can.node_id;
     extended_node_ids_[i] = axis.config_.can.is_extended;
@@ -46,11 +44,9 @@ void CANSimple::handle_can_message(const can_Message_t& msg) {
     // 6 bits | 5 bits
     uint32_t nodeID = get_node_id(msg.id);
 
-    for (auto& axis : axes) {
-        if ((axis.config_.can.node_id == nodeID) && (axis.config_.can.is_extended == msg.isExt)) {
-            do_command(axis, msg);
-            return;
-        }
+    if ((axis.config_.can.node_id == nodeID) && (axis.config_.can.is_extended == msg.isExt)) {
+        do_command(axis, msg);
+        return;
     }
 }
 
@@ -321,7 +317,7 @@ bool CANSimple::get_iq_callback(const Axis& axis) {
     if (!Idq_setpoint.has_value()) {
         Idq_setpoint = {0.0f, 0.0f};
     }
-    
+
     static_assert(sizeof(float) == sizeof(Idq_setpoint->second));
     static_assert(sizeof(float) == sizeof(axis.motor_.current_control_.Iq_measured_));
     can_setSignal<float>(txmsg, Idq_setpoint->second, 0, 32, true);
@@ -355,33 +351,31 @@ uint32_t CANSimple::service_stack() {
 
     // TODO: remove this polling loop and replace with protocol hook
     for (size_t i = 0; i < AXIS_COUNT; ++i) {
-        bool node_id_changed = (axes[i].config_.can.node_id != node_ids_[i]) || (axes[i].config_.can.is_extended != extended_node_ids_[i]);
+        bool node_id_changed = (axis.config_.can.node_id != node_ids_[i]) || (axis.config_.can.is_extended != extended_node_ids_[i]);
         if (node_id_changed) {
             renew_subscription(i);
         }
     }
 
-    for (auto& a : axes) {
-        MEASURE_TIME(a.task_times_.can_heartbeat) {
-            if (a.config_.can.heartbeat_rate_ms > 0) {
-                if ((now - a.can_.last_heartbeat) >= a.config_.can.heartbeat_rate_ms) {
-                    if (send_heartbeat(a))
-                        a.can_.last_heartbeat = now;
-                }
-
-                int nextAxisService = a.can_.last_heartbeat + a.config_.can.heartbeat_rate_ms - now;
-                nextServiceTime = std::min(nextServiceTime, static_cast<uint32_t>(std::max(0, nextAxisService)));
+    MEASURE_TIME(axis.task_times_.can_heartbeat) {
+        if (axis.config_.can.heartbeat_rate_ms > 0) {
+            if ((now - axis.can_.last_heartbeat) >= axis.config_.can.heartbeat_rate_ms) {
+                if (send_heartbeat(axis))
+                    axis.can_.last_heartbeat = now;
             }
 
-            if (a.config_.can.encoder_rate_ms > 0) {
-                if ((now - a.can_.last_encoder) >= a.config_.can.encoder_rate_ms) {
-                    if (get_encoder_estimates_callback(a))
-                        a.can_.last_encoder = now;
-                }
+            int nextAxisService = axis.can_.last_heartbeat + axis.config_.can.heartbeat_rate_ms - now;
+            nextServiceTime = std::min(nextServiceTime, static_cast<uint32_t>(std::max(0, nextAxisService)));
+        }
 
-                int nextAxisService = a.can_.last_encoder + a.config_.can.encoder_rate_ms - now;
-                nextServiceTime = std::min(nextServiceTime, static_cast<uint32_t>(std::max(0, nextAxisService)));
+        if (axis.config_.can.encoder_rate_ms > 0) {
+            if ((now - axis.can_.last_encoder) >= axis.config_.can.encoder_rate_ms) {
+                if (get_encoder_estimates_callback(axis))
+                    axis.can_.last_encoder = now;
             }
+
+            int nextAxisService = axis.can_.last_encoder + axis.config_.can.encoder_rate_ms - now;
+            nextServiceTime = std::min(nextServiceTime, static_cast<uint32_t>(std::max(0, nextAxisService)));
         }
     }
 
