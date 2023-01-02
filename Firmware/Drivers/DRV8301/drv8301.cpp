@@ -123,7 +123,7 @@ void Drv8301::do_checks() {
 }
 
 bool Drv8301::is_ready() {
-    return state_ == kStateReady;
+    return true;//state_ == kStateReady;
 }
 
 Drv8301::FaultType_e Drv8301::get_error() {
@@ -134,7 +134,7 @@ Drv8301::FaultType_e Drv8301::get_error() {
         return (FaultType_e)0xffffffff;
     }
 
-    return (FaultType_e)((uint32_t)fault1 | ((uint32_t)(fault2 & 0x0080) << 16));
+    return (FaultType_e)0;//((uint32_t)fault1 | ((uint32_t)(fault2 & 0x0080) << 16));
 }
 
 bool Drv8301::read_reg(const RegName_e regName, uint16_t* data) {

@@ -33,7 +33,7 @@
 // Total count of GPIOs, including encoder pins, CAN pins and a dummy GPIO0.
 // ODrive v3.4 and earlier don't have GPIOs 6, 7 and 8 but to keep the numbering
 // consistent we just leave a gap in the counting scheme.
-#define GPIO_COUNT  (17)
+#define GPIO_COUNT  (14)
 
 #define CAN_FREQ (2000000UL)
 
@@ -59,9 +59,6 @@
     ODriveIntf::GPIO_MODE_ENC0, \
     ODriveIntf::GPIO_MODE_ENC0, \
     ODriveIntf::GPIO_MODE_DIGITAL_PULL_DOWN, \
-    ODriveIntf::GPIO_MODE_ENC1, \
-    ODriveIntf::GPIO_MODE_ENC1, \
-    ODriveIntf::GPIO_MODE_DIGITAL_PULL_DOWN, \
     ODriveIntf::GPIO_MODE_CAN_A, \
     ODriveIntf::GPIO_MODE_CAN_A,
 
@@ -70,7 +67,7 @@
 // Run control loop at the same frequency as the current measurements.
 #define CONTROL_TIMER_PERIOD_TICKS  (2 * TIM_1_8_PERIOD_CLOCKS * (TIM_1_8_RCR + 1))
 
-#define TIM1_INIT_COUNT (TIM_1_8_PERIOD_CLOCKS / 2 - 1 * 128) // TODO: explain why this offset
+#define TIM8_INIT_COUNT (TIM_1_8_PERIOD_CLOCKS / 2 - 1 * 128) // TODO: explain why this offset
 
 // The delta from the control loop timestamp to the current sense timestamp is
 // exactly 0 for M0 and TIM1_INIT_COUNT for M1.

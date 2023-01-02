@@ -55,7 +55,7 @@ OnboardThermistorCurrentLimiter fet_thermistor =
 OffboardThermistorCurrentLimiter motor_thermistor;
 
 Motor motor = {
-    &htim1,                   // timer
+    &htim8,                   // 定时器
     0b110,                    // current_sensor_mask
     1.0f / SHUNT_RESISTANCE,  // shunt_conductance [S]
     m0_gate_driver,           // gate_driver
@@ -64,7 +64,7 @@ Motor motor = {
     motor_thermistor};
 
 Encoder encoder = {
-    &htim3,                              // timer
+    &htim1,                              // timer
     {M0_ENC_Z_GPIO_Port, M0_ENC_Z_Pin},  // index_gpio
     {M0_ENC_A_GPIO_Port, M0_ENC_A_Pin},  // hallA_gpio
     {M0_ENC_B_GPIO_Port, M0_ENC_B_Pin},  // hallB_gpio
@@ -80,7 +80,7 @@ MechanicalBrake mechanical_brake;
 SensorlessEstimator sensorless_estimator;
 Controller controller;
 TrapezoidalTrajectory trap;
-Axis axis({
+Axis axis(
     0,                                             // axis_num
     1,                                             // step_gpio_pin
     2,                                             // dir_gpio_pin
@@ -91,8 +91,8 @@ Axis axis({
     motor,                                         // motor
     trap,                                          // trap
     endstops[0], endstops[1],                      // min_endstop, max_endstop
-    mechanical_brake,                              // mechanical brake
-});
+    mechanical_brake                               // mechanical brake
+);
 
 #if (HW_VERSION_MINOR == 1) || (HW_VERSION_MINOR == 2)
 Stm32Gpio gpios[] = {
@@ -151,12 +151,9 @@ Stm32Gpio gpios[GPIO_COUNT] = {
     {GPIOA, GPIO_PIN_15},  // GPIO7
     {GPIOB, GPIO_PIN_3},   // GPIO8
 
-    {GPIOB, GPIO_PIN_4},   // ENC0_A
-    {GPIOB, GPIO_PIN_5},   // ENC0_B
-    {GPIOC, GPIO_PIN_9},   // ENC0_Z
-    {GPIOB, GPIO_PIN_6},   // ENC1_A
-    {GPIOB, GPIO_PIN_7},   // ENC1_B
-    {GPIOC, GPIO_PIN_15},  // ENC1_Z
+    {GPIOA, GPIO_PIN_8},   // ENC0_A
+    {GPIOA, GPIO_PIN_9},   // ENC0_B
+    {GPIOA, GPIO_PIN_10},  // ENC0_Z
     {GPIOB, GPIO_PIN_8},   // CAN_R
     {GPIOB, GPIO_PIN_9},   // CAN_D
 };
@@ -185,9 +182,6 @@ std::array<GpioFunction, 3> alternate_functions[GPIO_COUNT] = {
     /* ENC0_A: */ {{{ODrive::GPIO_MODE_ENC0, GPIO_AF2_TIM3}}},
     /* ENC0_B: */ {{{ODrive::GPIO_MODE_ENC0, GPIO_AF2_TIM3}}},
     /* ENC0_Z: */ {{}},
-    /* ENC1_A: */ {{{ODrive::GPIO_MODE_I2C_A, GPIO_AF4_I2C1}, {ODrive::GPIO_MODE_ENC1, GPIO_AF2_TIM4}}},
-    /* ENC1_B: */ {{{ODrive::GPIO_MODE_I2C_A, GPIO_AF4_I2C1}, {ODrive::GPIO_MODE_ENC1, GPIO_AF2_TIM4}}},
-    /* ENC1_Z: */ {{}},
     /* CAN_R: */ {{{ODrive::GPIO_MODE_CAN_A, GPIO_AF9_CAN1}, {ODrive::GPIO_MODE_I2C_A, GPIO_AF4_I2C1}}},
     /* CAN_D: */ {{{ODrive::GPIO_MODE_CAN_A, GPIO_AF9_CAN1}, {ODrive::GPIO_MODE_I2C_A, GPIO_AF4_I2C1}}},
 };
@@ -235,9 +229,8 @@ bool board_init() {
     MX_ADC1_Init();
     MX_ADC2_Init();
     MX_TIM1_Init();
-    MX_TIM8_Init();
-    MX_TIM3_Init();
     MX_TIM4_Init();
+    MX_TIM8_Init();
     MX_SPI3_Init();
     MX_ADC3_Init();
     MX_TIM2_Init();
@@ -331,8 +324,8 @@ void start_timers() {
          *  2. Each TIM13 reload coincides with a TIM1 lower update event.
          */
         Stm32Timer::start_synchronously<3>(
-            {&htim1, &htim8, &htim13},
-            {TIM1_INIT_COUNT, 0, TIM1_INIT_COUNT / 2 /* TIM13 is on a clock that's only have as fast as TIM1 */});
+            {&htim4, &htim8, &htim13},
+            {TIM8_INIT_COUNT, 0, TIM8_INIT_COUNT / 2 /* TIM13 is on a clock that's only have as fast as TIM1 */});
 
         hadc1.Instance->CR2 |= (ADC_EXTERNALTRIGINJECCONVEDGE_RISING);
         hadc2.Instance->CR2 |= (ADC_EXTERNALTRIGCONVEDGE_RISING | ADC_EXTERNALTRIGINJECCONVEDGE_RISING);
@@ -431,9 +424,9 @@ void TIM8_UP_TIM13_IRQHandler(void) {
         // Tentatively reset all PWM outputs to 50% duty cycles. If the control
         // loop handler finishes in time then these values will be overridden
         // before they go into effect.
-        TIM1->CCR1 =
-            TIM1->CCR2 =
-                TIM1->CCR3 =
+        TIM8->CCR1 =
+            TIM8->CCR2 =
+                TIM8->CCR3 =
                     TIM_1_8_PERIOD_CLOCKS / 2;
     }
 }
@@ -458,7 +451,7 @@ void ControlLoop_IRQHandler(void) {
         current0 = {0.0f, 0.0f};
     }
 
-    motor.current_meas_cb(timestamp - TIM1_INIT_COUNT, current0);
+    motor.current_meas_cb(timestamp - TIM8_INIT_COUNT, current0);
 
     odrv.control_loop_cb(timestamp);
 
@@ -473,8 +466,8 @@ void ControlLoop_IRQHandler(void) {
         motor.disarm_with_error(Motor::ERROR_BAD_TIMING);
     }
 
-    motor.dc_calib_cb(timestamp + TIM_1_8_PERIOD_CLOCKS * (TIM_1_8_RCR + 1) - TIM1_INIT_COUNT, current0);
-    motor.pwm_update_cb(timestamp + 3 * TIM_1_8_PERIOD_CLOCKS * (TIM_1_8_RCR + 1) - TIM1_INIT_COUNT);
+    motor.dc_calib_cb(timestamp + TIM_1_8_PERIOD_CLOCKS * (TIM_1_8_RCR + 1) - TIM8_INIT_COUNT, current0);
+    motor.pwm_update_cb(timestamp + 3 * TIM_1_8_PERIOD_CLOCKS * (TIM_1_8_RCR + 1) - TIM8_INIT_COUNT);
 
     // If we did everything right, the TIM8 update handler should have been
     // called exactly once between the start of this function and now.

@@ -567,9 +567,9 @@ extern "C" void early_start_checks(void) {
         builtin_bootloader();
     }
 
-    /* The bootloader might fail to properly clean up after itself,
-    so if we're not sure that the system is in a clean state we
-    just reset it again */
+    /* 引导加载程序可能无法在自身之后正确清理，
+    因此，如果我们不能确定系统是否处于清洁状态
+    只需重新设置 */
     if (_reboot_cookie != 42) {
         _reboot_cookie = 42;
         NVIC_SystemReset();
