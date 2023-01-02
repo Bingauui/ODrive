@@ -123,7 +123,7 @@ void Drv8301::do_checks() {
 }
 
 bool Drv8301::is_ready() {
-    return true;//state_ == kStateReady;
+    return state_ == kStateReady;//无drv8303
 }
 
 Drv8301::FaultType_e Drv8301::get_error() {

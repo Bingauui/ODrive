@@ -76,9 +76,11 @@
 
 #define M0_nCS_Pin GPIO_PIN_13
 #define M0_nCS_GPIO_Port GPIOC
-#define M0_IB_Pin GPIO_PIN_0
+#define M0_IA_Pin GPIO_PIN_0
+#define M0_IA_GPIO_Port GPIOC
+#define M0_IB_Pin GPIO_PIN_1
 #define M0_IB_GPIO_Port GPIOC
-#define M0_IC_Pin GPIO_PIN_1
+#define M0_IC_Pin GPIO_PIN_2
 #define M0_IC_GPIO_Port GPIOC
 #define GPIO_1_Pin GPIO_PIN_0
 #define GPIO_1_GPIO_Port GPIOA

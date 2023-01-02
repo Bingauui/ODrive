@@ -18,7 +18,7 @@ public:
 
     struct Config_t {
         Mode mode = MODE_INCREMENTAL;
-        float calib_range = 0.02f; // Accuracy required to pass encoder cpr check
+        float calib_range = 0.05f; // Accuracy required to pass encoder cpr check
         float calib_scan_distance = 16.0f * M_PI; // rad electrical
         float calib_scan_omega = 4.0f * M_PI; // rad/s electrical
         float bandwidth = 1000.0f;

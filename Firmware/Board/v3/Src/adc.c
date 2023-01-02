@@ -148,7 +148,7 @@ void MX_ADC2_Init(void) {
 
     /**Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time
      */
-    sConfigInjected.InjectedChannel = ADC_CHANNEL_10;
+    sConfigInjected.InjectedChannel = ADC_CHANNEL_11;
     sConfigInjected.InjectedRank = 1;
     sConfigInjected.InjectedNbrOfConversion = 1;
     sConfigInjected.InjectedSamplingTime = ADC_SAMPLETIME_3CYCLES;
@@ -195,7 +195,7 @@ void MX_ADC3_Init(void) {
 
     /**Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time
      */
-    sConfigInjected.InjectedChannel = ADC_CHANNEL_11;
+    sConfigInjected.InjectedChannel = ADC_CHANNEL_12;
     sConfigInjected.InjectedRank = 1;
     sConfigInjected.InjectedNbrOfConversion = 1;
     sConfigInjected.InjectedSamplingTime = ADC_SAMPLETIME_3CYCLES;

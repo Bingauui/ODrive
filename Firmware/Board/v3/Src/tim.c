@@ -310,6 +310,7 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle) {
 }
 
 void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle) {
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
     if (tim_encoderHandle->Instance == TIM1) {
         /* USER CODE BEGIN TIM3_MspInit 0 */
 
@@ -317,6 +318,17 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle) {
         /* TIM3 clock enable */
         __HAL_RCC_TIM1_CLK_ENABLE();
 
+        __HAL_RCC_GPIOA_CLK_ENABLE();
+        /**TIM1 GPIO Configuration
+        PA8     ------> TIM1_CH1
+        PA9     ------> TIM1_CH2
+        */
+        GPIO_InitStruct.Pin = M0_ENC_A_Pin | M0_ENC_B_Pin;
+        GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+        GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;
+        HAL_GPIO_Init(M0_ENC_A_GPIO_Port, &GPIO_InitStruct);
         /* USER CODE BEGIN TIM3_MspInit 1 */
 
         /* USER CODE END TIM3_MspInit 1 */
@@ -324,7 +336,8 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle) {
 }
 
 void HAL_TIM_IC_MspInit(TIM_HandleTypeDef* tim_icHandle) {
-    if (tim_icHandle->Instance == TIM5) {
+    if (tim_icHandle->Instance == TIM1) {
+    } else if (tim_icHandle->Instance == TIM5) {
         /* USER CODE BEGIN TIM5_MspInit 0 */
 
         /* USER CODE END TIM5_MspInit 0 */

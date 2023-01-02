@@ -239,8 +239,7 @@ void Motor::apply_pwm_timings(uint16_t timings[3], bool tentative) {
         
         if (!tentative) {
             if (is_armed_) {
-                // Set the Automatic Output Enable so that the Master Output Enable
-                // bit will be automatically enabled on the next update event.
+                // 设置自动输出启用，以便在下次更新事件时自动启用主输出启用位
                 tim->BDTR |= TIM_BDTR_AOE;
             }
         }
@@ -269,7 +268,8 @@ bool Motor::disarm(bool* p_was_armed) {
     CRITICAL_SECTION() {
         was_armed = is_armed_;
         if (is_armed_) {
-            gate_driver_.set_enabled(false);
+            // DRV8303
+            // gate_driver_.set_enabled(false);
         }
         is_armed_ = false;
         armed_state_ = 0;
@@ -320,9 +320,10 @@ bool Motor::setup() {
     float max_unity_gain_current = kMargin * max_output_swing * shunt_conductance_; // [A]
     float requested_gain = max_unity_gain_current / config_.requested_current_range; // [V/V]
     
-    float actual_gain;
-    if (!gate_driver_.config(requested_gain, &actual_gain))
-        return false;
+    float actual_gain = 20.0f;
+    //无DRV8303 电流采样增益固定
+    // if (!gate_driver_.config(requested_gain, &actual_gain))
+    //     return false;
 
     // Values for current controller
     phase_current_rev_gain_ = 1.0f / actual_gain;
@@ -331,8 +332,9 @@ bool Motor::setup() {
 
     max_dc_calib_ = 0.1f * max_allowed_current_;
 
-    if (!gate_driver_.init())
-        return false;
+    //DRV8303 取消初始化
+    // if (!gate_driver_.init())
+    //     return false;
 
     return true;
 }
@@ -347,10 +349,11 @@ void Motor::disarm_with_error(Motor::Error error){
 bool Motor::do_checks(uint32_t timestamp) {
     gate_driver_.do_checks();
 
-    if (!gate_driver_.is_ready()) {
-        disarm_with_error(ERROR_DRV_FAULT);
-        return false;
-    }
+    // DRV8303
+    // if (!gate_driver_.is_ready()) {
+    //     disarm_with_error(ERROR_DRV_FAULT);
+    //     return false;
+    // }
     if (!motor_thermistor_.do_checks()) {
         disarm_with_error(ERROR_MOTOR_THERMISTOR_OVER_TEMP);
         return false;
@@ -595,7 +598,7 @@ void Motor::update(uint32_t timestamp) {
 
 
 /**
- * @brief Called when the underlying hardware timer triggers an update event.
+ * @brief 当基础硬件计时器触发更新事件时调用。
  */
 void Motor::current_meas_cb(uint32_t timestamp, std::optional<Iph_ABC_t> current) {
     // TODO: this is platform specific
@@ -622,30 +625,24 @@ void Motor::current_meas_cb(uint32_t timestamp, std::optional<Iph_ABC_t> current
         current_meas_ = std::nullopt;
     }
 
-    // Run system-level checks (e.g. overvoltage/undervoltage condition)
-    // The motor might be disarmed in this function. In this case the
-    // handler will continue to run until the end but it won't have an
-    // effect on the PWM.
+    // 运行系统级别检查（例如过电压/欠电压条件）电机可能在此功能中被解除。在这种情况下，处理器将继续运行直到结束，但不会对PWM产生影响。
     odrv.do_fast_checks();
 
     if (current_meas_.has_value()) {
-        // Check for violation of current limit
-        // If Ia + Ib + Ic == 0 holds then we have:
+        // 检查是否违反电流限制
+        // 如果Ia+Ib+Ic==0成立，那么我们有：
         // Inorm^2 = Id^2 + Iq^2 = Ialpha^2 + Ibeta^2 = 2/3 * (Ia^2 + Ib^2 + Ic^2)
         float Itrip = effective_current_lim_ + config_.current_lim_margin;
         float Inorm_sq = 2.0f / 3.0f * (SQ(current_meas_->phA)
                                       + SQ(current_meas_->phB)
                                       + SQ(current_meas_->phC));
 
-        // Hack: we disable the current check during motor calibration because
-        // it tends to briefly overshoot when the motor moves to align flux with I_alpha
+        // 我们在电机校准期间禁用电流检查，因为当电机移动以使通量与I_alpha对齐时，电流检查会短暂过冲
         if (Inorm_sq > SQ(Itrip)) {
             disarm_with_error(ERROR_CURRENT_LIMIT_VIOLATION);
         }
     } else if (is_armed_) {
-        // Since we can't check current limits, be safe for now and disarm.
-        // Theoretically we could continue to operate if there is no active
-        // current limit.
+        // 由于我们无法检查电流限制，所以暂时安全并解除武装。理论上，如果没有活动电流限制，我们可以继续操作。
         disarm_with_error(ERROR_UNKNOWN_CURRENT_MEASUREMENT);
     }
 
@@ -715,10 +712,10 @@ void Motor::pwm_update_cb(uint32_t output_timestamp) {
     }
 
     if (!is_armed_) {
-        // If something above failed, reset I_bus to 0A.
+        // 如果以上内容失败，请将I_bus重置为0A。
         i_bus = 0.0f;
     } else if (is_armed_ && !i_bus.has_value()) {
-        // If the motor is armed then i_bus must be known
+        // 如果电机处于待命状态，则必须知道i_bus
         disarm_with_error(ERROR_UNKNOWN_CURRENT_MEASUREMENT);
         i_bus = 0.0f;
     }

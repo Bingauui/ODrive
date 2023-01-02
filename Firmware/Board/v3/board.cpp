@@ -179,8 +179,8 @@ std::array<GpioFunction, 3> alternate_functions[GPIO_COUNT] = {
     /* GPIO6: */ {{}},
     /* GPIO7: */ {{}},
     /* GPIO8: */ {{}},
-    /* ENC0_A: */ {{{ODrive::GPIO_MODE_ENC0, GPIO_AF2_TIM3}}},
-    /* ENC0_B: */ {{{ODrive::GPIO_MODE_ENC0, GPIO_AF2_TIM3}}},
+    /* ENC0_A: */ {{{ODrive::GPIO_MODE_ENC0, GPIO_AF1_TIM1}}},
+    /* ENC0_B: */ {{{ODrive::GPIO_MODE_ENC0, GPIO_AF1_TIM1}}},
     /* ENC0_Z: */ {{}},
     /* CAN_R: */ {{{ODrive::GPIO_MODE_CAN_A, GPIO_AF9_CAN1}, {ODrive::GPIO_MODE_I2C_A, GPIO_AF4_I2C1}}},
     /* CAN_D: */ {{{ODrive::GPIO_MODE_CAN_A, GPIO_AF9_CAN1}, {ODrive::GPIO_MODE_I2C_A, GPIO_AF4_I2C1}}},
@@ -229,13 +229,13 @@ bool board_init() {
     MX_ADC1_Init();
     MX_ADC2_Init();
     MX_TIM1_Init();
+    MX_TIM2_Init();
     MX_TIM4_Init();
+    MX_TIM5_Init();
     MX_TIM8_Init();
+    MX_TIM13_Init();
     MX_SPI3_Init();
     MX_ADC3_Init();
-    MX_TIM2_Init();
-    MX_TIM5_Init();
-    MX_TIM13_Init();
 
     // External interrupt lines are individually enabled in stm32_gpio.cpp
     HAL_NVIC_SetPriority(EXTI0_IRQn, 1, 0);
@@ -287,7 +287,7 @@ bool board_init() {
         // The CAN initialization will (and must) init its own GPIOs before the
         // GPIO modes are initialized. Therefore we ensure that the later GPIO
         // mode initialization won't override the CAN mode.
-        if (odrv.config_.gpio_modes[15] != ODriveIntf::GPIO_MODE_CAN_A || odrv.config_.gpio_modes[16] != ODriveIntf::GPIO_MODE_CAN_A) {
+        if (odrv.config_.gpio_modes[12] != ODriveIntf::GPIO_MODE_CAN_A || odrv.config_.gpio_modes[13] != ODriveIntf::GPIO_MODE_CAN_A) {
             odrv.misconfigured_ = true;
         }
     }
@@ -353,15 +353,15 @@ static bool fetch_and_reset_adcs(
         return false;
     }
 
-    vbus_sense_adc_cb(ADC1->JDR1);
-
-    if (m0_gate_driver.is_ready()) {
-        std::optional<float> phB = motor.phase_current_from_adcval(ADC2->JDR1);
-        std::optional<float> phC = motor.phase_current_from_adcval(ADC3->JDR1);
-        if (phB.has_value() && phC.has_value()) {
-            *current0 = {-*phB - *phC, *phB, *phC};
-        }
+    // vbus_sense_adc_cb(ADC1->JDR1);
+    vbus_sense_adc_cb(2708);  // 暂无母线电压采样
+    // if (m0_gate_driver.is_ready()) {
+    std::optional<float> phB = motor.phase_current_from_adcval(ADC2->JDR1);
+    std::optional<float> phC = motor.phase_current_from_adcval(ADC3->JDR1);
+    if (phB.has_value() && phC.has_value()) {
+        *current0 = {-*phB - *phC, *phB, *phC};
     }
+    // }
 
     ADC1->SR = ~(ADC_SR_JEOC);
     ADC2->SR = ~(ADC_SR_EOC | ADC_SR_JEOC | ADC_SR_OVR);
@@ -413,7 +413,6 @@ void TIM8_UP_TIM13_IRQHandler(void) {
     counting_down_ = counting_down;
 
     timestamp_ += TIM_1_8_PERIOD_CLOCKS * (TIM_1_8_RCR + 1);
-
     if (!counting_down) {
         TaskTimer::enabled = odrv.task_timers_armed_;
         // Run sampling handlers and kick off control tasks when TIM8 is
