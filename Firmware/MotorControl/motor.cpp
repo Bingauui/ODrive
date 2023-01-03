@@ -318,7 +318,7 @@ bool Motor::setup() {
     constexpr float kMargin = 0.90f;
     constexpr float max_output_swing = 1.35f; // [V] out of amplifier
     float max_unity_gain_current = kMargin * max_output_swing * shunt_conductance_; // [A]
-    float requested_gain = max_unity_gain_current / config_.requested_current_range; // [V/V]
+    // float requested_gain = max_unity_gain_current / config_.requested_current_range; // [V/V]
     
     float actual_gain = 20.0f;
     //无DRV8303 电流采样增益固定

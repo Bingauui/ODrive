@@ -40,7 +40,8 @@ def get_version_from_git():
 
     except Exception as ex:
         print(ex)
-        return "[unknown version]", 0, 0, 0, 1
+        # return "[unknown version]", 0, 0, 0, 1
+        return "[fw-v0.5.5-4-ge978c385*]",0,5,5,1
 
 def get_version_str(git_only=False, is_post_release=False, bump_rev=False, release_override=False):
     """

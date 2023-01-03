@@ -1447,9 +1447,6 @@ interfaces:
           gpio11_mode: {type: ODrive.GpioMode, doc: Mode of GPIO11 (changes take effect after reboot), c_name: 'gpio_modes[11]'}
           gpio12_mode: {type: ODrive.GpioMode, doc: Mode of GPIO12 (changes take effect after reboot), c_name: 'gpio_modes[12]'}
           gpio13_mode: {type: ODrive.GpioMode, doc: Mode of GPIO13 (changes take effect after reboot), c_name: 'gpio_modes[13]'}
-          gpio14_mode: {type: ODrive.GpioMode, doc: Mode of GPIO14 (changes take effect after reboot), c_name: 'gpio_modes[14]'}
-          gpio15_mode: {type: ODrive.GpioMode, doc: Mode of GPIO15 (changes take effect after reboot), c_name: 'gpio_modes[15]'}
-          gpio16_mode: {type: ODrive.GpioMode, doc: Mode of GPIO16 (changes take effect after reboot), c_name: 'gpio_modes[16]'}
 
           gpio1_pwm_mapping: {type: ODrive.Endpoint, c_name: 'pwm_mappings[0]', doc: Make sure the corresponding GPIO is in `GPIO_MODE_PWM`.}
           gpio2_pwm_mapping: {type: ODrive.Endpoint, c_name: 'pwm_mappings[1]', doc: Make sure the corresponding GPIO is in `GPIO_MODE_PWM`.}
