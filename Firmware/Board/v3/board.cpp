@@ -53,7 +53,6 @@ OnboardThermistorCurrentLimiter fet_thermistor =
 };
 
 OffboardThermistorCurrentLimiter motor_thermistor;
-
 Motor motor = {
     &htim8,                   // 定时器
     0b110,                    // current_sensor_mask
@@ -353,8 +352,7 @@ static bool fetch_and_reset_adcs(
         return false;
     }
 
-    // vbus_sense_adc_cb(ADC1->JDR1);
-    vbus_sense_adc_cb(2708);  // 暂无母线电压采样
+    vbus_sense_adc_cb(ADC1->JDR1);
     // if (m0_gate_driver.is_ready()) {
     std::optional<float> phB = motor.phase_current_from_adcval(ADC2->JDR1);
     std::optional<float> phC = motor.phase_current_from_adcval(ADC3->JDR1);

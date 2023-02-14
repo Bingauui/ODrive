@@ -42,11 +42,11 @@ target_include_directories(${PROJECT_NAME}.elf
                 ThirdParty/STM32_USB_Device_Library/Core/Inc ThirdParty/STM32_USB_Device_Library/Class/CDC/Inc ThirdParty/STM32F4xx_HAL_Driver/Inc ThirdParty/STM32F4xx_HAL_Driver/Inc/Legacy
                 ThirdParty/FreeRTOS/Source/CMSIS_RTOS)
 target_compile_options(${PROJECT_NAME}.elf 
-        PUBLIC  -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wno-psabi -mthumb -mthumb-interwork -ffunction-sections -fdata-sections -fno-common -fmessage-length=0
+        PUBLIC  -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wno-psabi -mthumb -ffunction-sections -fdata-sections -fno-common -fmessage-length=0
                 $<$<COMPILE_LANGUAGE:ASM>:-x$<SEMICOLON>assembler-with-cpp>)
 target_link_options(${PROJECT_NAME}.elf 
         PUBLIC  -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--undefined=uxTopUsedPriority,-gc-sections,--print-memory-usage,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map
-                -mthumb -mthumb-interwork -specs=nosys.specs -u_printf_float -u_scanf_float -flto -lc -lm -lnosys -T ${LINKER_SCRIPT}
+                -mthumb -specs=nosys.specs -u_printf_float -u_scanf_float -flto -lc -lm -lnosys -T ${LINKER_SCRIPT}
 )
 target_link_libraries(${PROJECT_NAME}.elf
         PUBLIC  -larm_cortexM4lf_math -L${CMAKE_SOURCE_DIR}/ThirdParty/CMSIS/Lib/GCC

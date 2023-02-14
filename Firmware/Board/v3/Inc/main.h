@@ -92,8 +92,8 @@
 #define GPIO_4_GPIO_Port GPIOA
 #define AUX_TEMP_Pin GPIO_PIN_5
 #define AUX_TEMP_GPIO_Port GPIOA
-#define VBUS_S_Pin GPIO_PIN_6
-#define VBUS_S_GPIO_Port GPIOA
+#define VBUS_S_Pin GPIO_PIN_4
+#define VBUS_S_GPIO_Port GPIOC
 #define M0_TEMP_Pin GPIO_PIN_5
 #define M0_TEMP_GPIO_Port GPIOC
 #define GPIO_6_Pin GPIO_PIN_2
