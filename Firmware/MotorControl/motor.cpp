@@ -320,7 +320,7 @@ bool Motor::setup() {
     float max_unity_gain_current = kMargin * max_output_swing * shunt_conductance_; // [A]
     // float requested_gain = max_unity_gain_current / config_.requested_current_range; // [V/V]
     
-    float actual_gain = 20.0f;
+    float actual_gain = 50.0f;
     //无DRV8303 电流采样增益固定
     // if (!gate_driver_.config(requested_gain, &actual_gain))
     //     return false;

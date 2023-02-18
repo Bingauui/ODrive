@@ -25,7 +25,7 @@
 #if HW_VERSION_MINOR <= 3
 #define SHUNT_RESISTANCE (675e-6f)
 #else
-#define SHUNT_RESISTANCE (100e-4f) //电流采样电阻 阻值
+#define SHUNT_RESISTANCE (500e-6f) //电流采样电阻 阻值
 #endif
 
 #define AXIS_COUNT (1)

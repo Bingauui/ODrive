@@ -101,7 +101,7 @@ void MX_ADC1_Init(void) {
 
     /**Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time
      */
-    sConfigInjected.InjectedChannel = ADC_CHANNEL_6;
+    sConfigInjected.InjectedChannel = ADC_CHANNEL_14;
     sConfigInjected.InjectedRank = 1;
     sConfigInjected.InjectedNbrOfConversion = 1;
     sConfigInjected.InjectedSamplingTime = ADC_SAMPLETIME_3CYCLES;
@@ -223,7 +223,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle) {
         PC1     ------> ADC1_IN11
         PC2     ------> ADC1_IN12
         PC3     ------> ADC1_IN13
-        PA4     ------> ADC1_IN4
+        PC4     ------> ADC1_IN14
         PA5     ------> ADC1_IN5
         PA6     ------> ADC1_IN6
         PC5     ------> ADC1_IN15
@@ -271,7 +271,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle) {
         PC1     ------> ADC2_IN11
         PC2     ------> ADC2_IN12
         PC3     ------> ADC2_IN13
-        PA4     ------> ADC2_IN4
+        PC4     ------> ADC2_IN14
         PA5     ------> ADC2_IN5
         PA6     ------> ADC2_IN6
         PC5     ------> ADC2_IN15
