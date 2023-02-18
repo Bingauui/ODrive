@@ -20,7 +20,7 @@ project(ODriveFirmware C CXX ASM)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
-add_definitions(-DSTM32F405xx -DUSE_HAL_DRIVER -DARM_MATH_CM4 -DHW_VERSION_MAJOR=3 -DHW_VERSION_MINOR=6 -DHW_VERSION_VOLTAGE=24
+add_definitions(-DSTM32F446xx -DUSE_HAL_DRIVER -DARM_MATH_CM4 -DHW_VERSION_MAJOR=3 -DHW_VERSION_MINOR=6 -DHW_VERSION_VOLTAGE=24
                 -DFIBRE_ENABLE_SERVER)
 
 message("${CMAKE_BUILD_TYPE}")
@@ -29,7 +29,7 @@ add_definitions(-DFPU_FPV4)
 endif()
 
 file(GLOB_RECURSE SOURCES "autogen/*.*" "syscalls.c" "Board/v3/*.*" "communication/*.*" "fibre-cpp/*.*" "Drivers/*.*" "MotorControl/*.*" "ThirdParty/*.*")
-set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/Board/v3/STM32F405RGTx_FLASH.ld)
+set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/Board/v3/STM32F446RETx_FLASH.ld)
 
 # add_subdirectory(Drivers)
 # add_subdirectory(Middlewares)

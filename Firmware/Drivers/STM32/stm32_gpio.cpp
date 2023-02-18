@@ -38,7 +38,7 @@ static inline IRQn_Type get_irq_number(uint16_t pin_number) {
     }
 }
 
-#define GPIO_MODE             0x00000003U
+// #define GPIO_MODE             0x00000003U
 #define GPIO_OUTPUT_TYPE      0x00000010U
 
 
