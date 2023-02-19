@@ -6,12 +6,13 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2015 STMicroelectronics.
-  * All rights reserved.
+  * <h2><center>&copy; Copyright (c) 2015 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                      www.st.com/SLA0044
   *
   ******************************************************************************
   */
@@ -209,13 +210,14 @@ typedef struct
 {
   uint8_t   bLength;
   uint8_t   bDescriptorType;
-  uint16_t  wTotalLength;
+  uint8_t   wDescriptorLengthLow;
+  uint8_t   wDescriptorLengthHigh;
   uint8_t   bNumInterfaces;
   uint8_t   bConfigurationValue;
   uint8_t   iConfiguration;
   uint8_t   bmAttributes;
   uint8_t   bMaxPower;
-} __PACKED USBD_ConfigDescTypeDef;
+} USBD_ConfigDescTypedef;
 
 typedef struct
 {
@@ -223,7 +225,7 @@ typedef struct
   uint8_t   bDescriptorType;
   uint16_t  wTotalLength;
   uint8_t   bNumDeviceCaps;
-} USBD_BosDescTypeDef;
+} USBD_BosDescTypedef;
 
 typedef struct
 {
@@ -265,7 +267,7 @@ typedef struct _Device_cb
   uint8_t  *(*GetDeviceQualifierDescriptor)(uint16_t *length);
 #if (USBD_SUPPORT_USER_STRING_DESC == 1U)
   uint8_t  *(*GetUsrStrDescriptor)(struct _USBD_HandleTypeDef *pdev, uint8_t index,  uint16_t *length);
-#endif /* USBD_SUPPORT_USER_STRING_DESC  */
+#endif
 
 } USBD_ClassTypeDef;
 
@@ -298,10 +300,10 @@ typedef struct
   uint8_t *(*GetInterfaceStrDescriptor)(USBD_SpeedTypeDef speed, uint16_t *length);
 #if (USBD_CLASS_USER_STRING_DESC == 1)
   uint8_t *(*GetUserStrDescriptor)(USBD_SpeedTypeDef speed, uint8_t idx, uint16_t *length);
-#endif /* USBD_CLASS_USER_STRING_DESC */
+#endif
 #if ((USBD_LPM_ENABLED == 1U) || (USBD_CLASS_BOS_ENABLED == 1))
   uint8_t *(*GetBOSDescriptor)(USBD_SpeedTypeDef speed, uint16_t *length);
-#endif /* (USBD_LPM_ENABLED == 1U) || (USBD_CLASS_BOS_ENABLED == 1) */
+#endif
 } USBD_DescriptorsTypeDef;
 
 /* USB Device handle structure */
@@ -368,10 +370,10 @@ typedef struct _USBD_HandleTypeDef
   USBD_SpeedTypeDef       dev_speed;
   USBD_EndpointTypeDef    ep_in[16];
   USBD_EndpointTypeDef    ep_out[16];
-  __IO uint32_t           ep0_state;
+  uint32_t                ep0_state;
   uint32_t                ep0_data_len;
-  __IO uint8_t            dev_state;
-  __IO uint8_t            dev_old_state;
+  uint8_t                 dev_state;
+  uint8_t                 dev_old_state;
   uint8_t                 dev_address;
   uint8_t                 dev_connection_status;
   uint8_t                 dev_test_mode;
@@ -380,18 +382,12 @@ typedef struct _USBD_HandleTypeDef
 
   USBD_SetupReqTypedef    request;
   USBD_DescriptorsTypeDef *pDesc;
-  USBD_ClassTypeDef       *pClass[USBD_MAX_SUPPORTED_CLASS];
+  USBD_ClassTypeDef       *pClass;
   void                    *pClassData;
-  void                    *pClassDataCmsit[USBD_MAX_SUPPORTED_CLASS];
-  void                    *pUserData[USBD_MAX_SUPPORTED_CLASS];
+  void                    *pUserData;
   void                    *pData;
   void                    *pBosDesc;
   void                    *pConfDesc;
-  uint32_t                classId;
-  uint32_t                NumClasses;
-#ifdef USE_USBD_COMPOSITE
-  USBD_CompositeElementTypeDef tclasslist[USBD_MAX_SUPPORTED_CLASS];
-#endif /* USE_USBD_COMPOSITE */
 } USBD_HandleTypeDef;
 
 /* USB Device endpoint direction */
@@ -430,21 +426,11 @@ __STATIC_INLINE uint16_t SWAPBYTE(uint8_t *addr)
   return _SwapVal;
 }
 
-#ifndef LOBYTE
 #define LOBYTE(x)  ((uint8_t)((x) & 0x00FFU))
-#endif /* LOBYTE */
-
-#ifndef HIBYTE
 #define HIBYTE(x)  ((uint8_t)(((x) & 0xFF00U) >> 8U))
-#endif /* HIBYTE */
-
-#ifndef MIN
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
-#endif /* MIN */
-
-#ifndef MAX
 #define MAX(a, b)  (((a) > (b)) ? (a) : (b))
-#endif /* MAX */
+
 
 #if  defined ( __GNUC__ )
 #ifndef __weak
@@ -511,6 +497,6 @@ __STATIC_INLINE uint16_t SWAPBYTE(uint8_t *addr)
   */
 
 /**
-  * @}
-  */
-
+* @}
+*/
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

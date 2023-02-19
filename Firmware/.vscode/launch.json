@@ -12,8 +12,8 @@
             "name": "Debug ODrive v3.x - ST-Link",
             "executable": "${workspaceRoot}/build/ODriveFirmware.elf",
             "configFiles": [
-                "interface/stlink-v2.cfg",
-                "target/stm32f4x_stlink.cfg",
+                "${workspaceRoot}/stlink.cfg",
+                "${workspaceRoot}/stm32f4x.cfg",
             ],
             "svdFile": "${workspaceRoot}/Board/v3/STM32F40x.svd",
             "cwd": "${workspaceRoot}"
@@ -24,7 +24,7 @@
             "servertype": "openocd",
             "request": "launch",
             "name": "Debug ODrive v4.x - ST-Link",
-            "executable": "${workspaceRoot}/build/ODriveFirmware.elf",
+            "executable": "${workspaceRoot}/Output/ODriveFirmware.elf",
             "configFiles": [
                 "interface/stlink.cfg",
                 "target/stm32f7x.cfg",
@@ -41,18 +41,18 @@
             "servertype": "openocd",
             "request": "launch",
             "name": "Debug ODrive v3.x - ST-Link - FreeRTOS",
-            "executable": "${workspaceRoot}/build/ODriveFirmware.elf",
+            "executable": "${workspaceRoot}/Output/ODriveFirmware.elf",
             "rtos": "FreeRTOS",
             "configFiles": [
-                "interface/stlink-v2.cfg",
-                "target/stm32f4x_stlink.cfg",
+                "${workspaceRoot}/stlink.cfg",
+                "${workspaceRoot}/stm32f4x.cfg",
             ],
             "svdFile": "${workspaceRoot}/Board/v3/STM32F40x.svd",
             "cwd": "${workspaceRoot}"
         },
         {
             // For the Cortex-Debug extension
-            // ssh -t odrv3 -L3333:localhost:3333 bash -c "\"openocd '-f' 'interface/stlink-v2.cfg' '-f' 'target/stm32f4x_stlink.cfg'\""
+            // ssh -t odrv3 -L3333:localhost:3333 bash -c "\"openocd '-f' '${workspaceRoot}/stlink.cfg' '-f' '${workspaceRoot}/stm32f4x.cfg'\""
             "type": "cortex-debug",
             "servertype": "external",
             "gdbTarget": "localhost:3333",
@@ -63,8 +63,8 @@
             "name": "Debug ODrive v3.x - Remote",
             "executable": "${workspaceRoot}/build/ODriveFirmware.elf",
             "configFiles": [
-                "interface/stlink-v2.cfg",
-                "target/stm32f4x_stlink.cfg",
+                "${workspaceRoot}/stlink.cfg",
+                "${workspaceRoot}/stm32f4x.cfg",
             ],
             "svdFile": "${workspaceRoot}/Board/v3/STM32F40x.svd",
             "cwd": "${workspaceRoot}"

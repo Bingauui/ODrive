@@ -163,7 +163,7 @@ void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd)
     pdev->ep0_state = USBD_EP0_SETUP;
     pdev->ep0_data_len = pdev->request.wLength;
 
-    // ret = pdev->pClass->Setup(pdev, req);
+    ret = pdev->pClass->Setup(pdev, req);
 
     if( (req->wLength == 0) && (ret == USBD_OK) )
     {
