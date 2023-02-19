@@ -6,13 +6,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2015 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2015 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                      www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -41,9 +40,15 @@ extern "C" {
 /** @defgroup usbd_cdc_Exported_Defines
   * @{
   */
+#ifndef CDC_IN_EP
 #define CDC_IN_EP                                   0x81U  /* EP1 for data IN */
+#endif /* CDC_IN_EP */
+#ifndef CDC_OUT_EP
 #define CDC_OUT_EP                                  0x01U  /* EP1 for data OUT */
+#endif /* CDC_OUT_EP */
+#ifndef CDC_CMD_EP
 #define CDC_CMD_EP                                  0x82U  /* EP2 for CDC commands */
+#endif /* CDC_CMD_EP  */
 #define ODRIVE_IN_EP                                0x83  /* EP3 IN: ODrive device TX endpoint */
 #define ODRIVE_OUT_EP                               0x03  /* EP3 OUT: ODrive device RX endpoint */
 
@@ -67,6 +72,7 @@ extern "C" {
 #define CDC_DATA_FS_IN_PACKET_SIZE                  CDC_DATA_FS_MAX_PACKET_SIZE
 #define CDC_DATA_FS_OUT_PACKET_SIZE                 CDC_DATA_FS_MAX_PACKET_SIZE
 
+#define CDC_REQ_MAX_DATA_SIZE                       0x7U
 /*---------------------------------------------------------------------*/
 /*  CDC definitions                                                    */
 /*---------------------------------------------------------------------*/
@@ -180,4 +186,3 @@ uint8_t USBD_CDC_TransmitPacket(USBD_HandleTypeDef *pdev, uint8_t* buf, size_t l
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
